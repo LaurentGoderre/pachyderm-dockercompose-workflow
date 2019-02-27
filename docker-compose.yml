@@ -1,0 +1,41 @@
+version: '3.4'
+
+x-pachctl:
+  &default-pachctl
+  image: laurentgoderre/pachctl:1.8.3-alpine
+  user: root
+  entrypoint:
+    - /bin/sh
+    - -c
+    - "ip -4 route list match 0/0 | awk '{print $$3\" host.docker.internal\"}' >> /etc/hosts && ./run/test.sh"
+  environment:
+    PACHD_ADDRESS: host.docker.internal:30650
+  working_dir: /root
+
+services:
+  db:
+    image: heimirthor/adventureworksforpostgres_db:latest
+    ports:
+      - "5432:5432"
+    logging:
+      driver: none
+  pachctl:
+    << : *default-pachctl
+    depends_on:
+      - db
+    volumes:
+      - "${PWD}/pachyderm-client:/root/run"
+  postgres_client:
+    build:
+      context: postgres-client/.
+    image: pachyderm-experiment-postgres:test
+    command: "tail -f /dev/null"
+    logging:
+      driver: none
+  test:
+    << : *default-pachctl
+    depends_on:
+      - db
+      - pachctl
+    volumes:
+      - "${PWD}/test:/root/run"

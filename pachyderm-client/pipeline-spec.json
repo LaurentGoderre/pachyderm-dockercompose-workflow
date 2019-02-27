@@ -1,0 +1,25 @@
+{
+  "pipeline": {
+    "name": "low-inventory-postgres"
+  },
+  "transform": {
+    "image": "pachyderm-experiment-postgres:test",
+    "env": {
+      "PGHOST": "host.docker.internal",
+      "PGDATABASE": "Adventureworks",
+      "PGUSER": "postgres",
+      "PGPASSWORD": "postgres"
+    },
+    "cmd": ["bash"],
+    "stdin": [
+      "ip -4 route list match 0/0 | awk '{print $$3\" host.docker.internal\"}' >> /etc/hosts",
+      "/root/script.sh"
+    ]
+  },
+  "input": {
+      "pfs": {
+        "repo": "inventory-postgres",
+        "glob": "/*"
+      }
+  }
+}
